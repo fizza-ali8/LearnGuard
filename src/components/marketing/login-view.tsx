@@ -32,7 +32,7 @@ export function LoginView() {
   const onSubmit = form.handleSubmit(async (values) => {
     if (values.password !== DEMO_PASSWORD) {
       form.setError("password", {
-        message: "Those details don’t match a LearnGuard account. Use the demo password shown below, or continue with the demo account.",
+        message: "Those details don’t match a LearnGuard account.",
       });
       toast.error("Sign-in failed. Check the email and password.");
       return;
@@ -99,16 +99,16 @@ export function LoginView() {
             className="mt-3 w-full"
             onClick={async () => {
               await signInWithDemo();
-              toast.success("Signed in with the demo account");
+              toast.success("Signed in successfully");
               router.push(destination);
             }}
           >
-            Continue with Demo Account
+            Continue as Sarah Ahmed
           </Button>
           <p className="mt-4 text-center text-xs leading-5 text-faint">
-            Demo teacher: sarah.ahmed@horizonprimary.edu
+            Teacher: sarah.ahmed@horizonprimary.edu
             <br />
-            Demo password: {DEMO_PASSWORD}
+            Password: {DEMO_PASSWORD}
           </p>
           <ScreeningDisclaimer className="mt-6 text-center" />
           <p className="mt-4 text-center text-sm">

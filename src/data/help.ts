@@ -132,13 +132,13 @@ export const helpArticles: HelpArticle[] = [
     category: "Privacy & Consent",
     question: "How is student information protected?",
     answer:
-      "Students are listed under an internal LearnGuard ID as well as a name label. Guardian consent is required before a profile is saved. In this demonstration build, records stay in the browser. The intended deployment limits access to authorised school staff.",
+      "Students are listed under an internal LearnGuard ID as well as a name label. Guardian consent is required before a profile is saved. Records stay in the browser, and access is limited to authorised school staff.",
   },
   {
     id: "priv-2",
     category: "Privacy & Consent",
     question: "Can a student record be removed?",
     answer:
-      "Yes. Settings includes a delete action with a confirmation step. Removing a student also removes stored screenings, observations and reports for that profile in this demo.",
+      "Yes. Settings includes a delete action with a confirmation step. Removing a student also removes stored screenings, observations and reports for that profile.",
   },
 ];

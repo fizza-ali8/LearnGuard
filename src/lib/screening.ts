@@ -176,14 +176,14 @@ export function repairAdhdAssessment(assessment: Assessment): Assessment {
       explanation: explanationFor("adhd", level),
       recommendation: recommendationFor(level, "adhd"),
       modelName: assessment.modelName ?? MODEL_META.adhd.model,
-      modelVersion: "demonstration",
+      modelVersion: MODEL_META.adhd.version,
       explanationMethod: MODEL_META.adhd.method,
       datasetVersion: MODEL_META.adhd.dataset,
       adhdResult: {
         screenPositive,
         message,
         disclaimer: ADHD_MODEL_DISCLAIMER,
-        modelVersion: "demonstration",
+        modelVersion: MODEL_META.adhd.version,
         topFactors: assessment.factors.slice(0, 5).map((factor) => ({
           feature: factor.label,
           question: featureLabel(factor.label),

@@ -7,7 +7,7 @@ import {
   seedReports,
   seedStudents,
 } from "@/data/seed";
-import { DYSLEXIA_DISCLAIMER } from "@/lib/dyslexia-audio";
+import { DYSLEXIA_DISCLAIMER, dyslexiaExplanation, type DyslexiaSignal } from "@/lib/dyslexia-audio";
 import { overallFromProfile } from "@/lib/risk";
 import { adhdRiskFromAssessment, legacyAdhdRisk, repairAdhdAssessment } from "@/lib/screening";
 import { createAssessment } from "@/services/assessments";
@@ -26,6 +26,7 @@ import type {
   CreateAssessmentInput,
   CreateStudentInput,
   Report,
+  RiskLevel,
   Student,
 } from "@/types";
 import type { ObservationDraft } from "@/lib/behaviour-score";
@@ -56,6 +57,9 @@ interface DataContextValue extends StoreState {
     durationSeconds: number;
     estimatedActivitySeconds: number;
     qualityFlags: string[];
+    score: number;
+    level: RiskLevel;
+    signals: DyslexiaSignal[];
   }) => Promise<Assessment>;
   saveObservation: (draft: ObservationDraft) => Promise<BehaviourObservation>;
   createReport: (studentId: string) => Promise<Report>;
@@ -96,12 +100,19 @@ function reconcileStore(state: StoreState): StoreState {
 
 function applyAssessment(student: Student, assessment: Assessment): Student {
   if (assessment.type === "dyslexia" && assessment.dyslexiaAudio) {
-    const { dyslexia: _omit, ...withoutDyslexia } = student.riskProfile;
-    const overall = overallFromProfile(withoutDyslexia);
+    const riskProfile = {
+      ...student.riskProfile,
+      dyslexia: {
+        score: assessment.score ?? 0,
+        level: assessment.riskLevel,
+        assessedAt: assessment.createdAt,
+      },
+    };
+    const overall = overallFromProfile(riskProfile);
     return {
       ...student,
       updatedAt: assessment.createdAt,
-      riskProfile: { ...withoutDyslexia, overallConcern: overall.level, overallNote: overall.note },
+      riskProfile: { ...riskProfile, overallConcern: overall.level, overallNote: overall.note },
     };
   }
   const riskProfile = {
@@ -195,7 +206,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
               ? "Handwriting screening completed"
               : "ADHD caregiver screening completed",
         detail: assessment.dyslexiaAudio?.disclaimer ?? assessment.adhdResult?.message ?? assessment.explanation,
-        riskLevel: assessment.dyslexiaAudio ? undefined : assessment.riskLevel,
+        riskLevel: assessment.riskLevel,
         createdAt: assessment.createdAt,
         href: `/results/${assessment.id}`,
       })),
@@ -299,13 +310,20 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           id: `asm-${Date.now()}`,
           studentId: student.id,
           type: "dyslexia",
-          score: null,
-          riskLevel: "low",
+          score: input.score,
+          riskLevel: input.level,
           createdAt,
           teacher: TEACHER.name,
-          explanation: DYSLEXIA_DISCLAIMER,
-          factors: [],
-          recommendation: DYSLEXIA_DISCLAIMER,
+          explanation: dyslexiaExplanation(input.signals, input.score),
+          factors: input.signals.map((signal) => ({
+            label: signal.label,
+            impact: signal.value >= 60 ? "high" as const : signal.value >= 40 ? "moderate" as const : "low" as const,
+            value: signal.value,
+            detail: signal.detail,
+          })),
+          recommendation: input.level === "low"
+            ? "The audio features in this recording did not show a strong screening concern. A later passage can be checked if classroom reading still seems difficult."
+            : "Review this oral reading with the student. The audio features above are the ones that raised the screening concern.",
           dyslexiaAudio: {
             status: "not_assessed",
             durationSeconds: input.durationSeconds,

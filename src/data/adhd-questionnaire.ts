@@ -99,6 +99,16 @@ export function questionsInSection(section: string, questions: AdhdQuestion[] = 
   return questions.filter((question) => question.section === section).sort((a, b) => a.number - b.number);
 }
 
+/** Questions in the order the form presents them: section by section, then original order inside a section. */
+export function questionsInOrder(questions: AdhdQuestion[] = ADHD_QUESTIONS) {
+  return sectionsFor(questions).flatMap((section) => questionsInSection(section, questions));
+}
+
+export function displayNumber(question: AdhdQuestion, questions: AdhdQuestion[] = ADHD_QUESTIONS) {
+  const index = questionsInOrder(questions).findIndex((item) => item.featureKey === question.featureKey);
+  return index >= 0 ? index + 1 : question.number;
+}
+
 export function answerLabel(question: AdhdQuestion, value: number | undefined) {
   if (typeof value !== "number") return "";
   return question.options.find((option) => option.value === value)?.label ?? "";
@@ -109,7 +119,7 @@ export function answeredCount(answers: AdhdAnswers, questions: AdhdQuestion[] = 
 }
 
 export function firstUnanswered(answers: AdhdAnswers, questions: AdhdQuestion[] = ADHD_QUESTIONS) {
-  return questions.find((question) => typeof answers[question.featureKey] !== "number");
+  return questionsInOrder(questions).find((question) => typeof answers[question.featureKey] !== "number");
 }
 
 export function respondentLabel(value?: string) {

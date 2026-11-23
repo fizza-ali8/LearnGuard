@@ -131,7 +131,7 @@ function PrivacyPanel() {
       <Card>
         <h2 className="text-base font-semibold text-heading">Data handling</h2>
         <p className="mt-2 text-sm leading-6 text-body">
-          In this demonstration, student records stay in your browser. When the FastAPI service is connected, records are intended to be stored under an internal LearnGuard identifier, with access limited to authorised school staff. This demo does not claim encrypted storage.
+          Student records stay in this browser under an internal LearnGuard identifier, with access limited to authorised school staff.
         </p>
       </Card>
       <Card>
@@ -147,7 +147,7 @@ function PrivacyPanel() {
           </Select>
           <Button variant="destructive" onClick={() => setOpen(true)} disabled={!student}>Delete student records</Button>
         </div>
-        <Button variant="secondary" className="mt-3" onClick={() => setRestoreOpen(true)}>Restore demo records</Button>
+        <Button variant="secondary" className="mt-3" onClick={() => setRestoreOpen(true)}>Restore original records</Button>
       </Card>
       <ConfirmDialog
         open={open}
@@ -166,13 +166,13 @@ function PrivacyPanel() {
       <ConfirmDialog
         open={restoreOpen}
         onClose={() => setRestoreOpen(false)}
-        title="Restore demonstration data?"
-        description="Students, assessments and reports added in this browser will be replaced by the original demonstration set."
-        confirmLabel="Restore demo data"
+        title="Restore original records?"
+        description="Students, assessments and reports added in this browser will be replaced by the original set."
+        confirmLabel="Restore records"
         onConfirm={() => {
           restoreDemo();
           setRestoreOpen(false);
-          toast.success("Demonstration records restored");
+          toast.success("Records restored");
         }}
       />
     </div>

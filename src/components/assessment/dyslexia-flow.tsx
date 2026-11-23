@@ -5,15 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Breadcrumb, Card, ErrorState, PageHeader } from "@/components/ui/display";
 import { useStudent } from "@/hooks/use-student";
 import { formatFileSize } from "@/lib/format";
+import { RiskBadge, RiskBar } from "@/components/ui/risk";
 import {
-  DYSLEXIA_ACTIVITY_LABEL,
   DYSLEXIA_DISCLAIMER,
+  DYSLEXIA_ELEVATED_THRESHOLD,
   DYSLEXIA_EXTENSIONS,
   analyzeDyslexiaAudio,
   dyslexiaUploadError,
-  qualityCheckText,
-  type DyslexiaAudioAnalysis,
+  scoreDyslexiaFile,
+  type DyslexiaScreen,
 } from "@/lib/dyslexia-audio";
+import { levelFromScore, riskPhrase } from "@/lib/risk";
 import { Upload } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -30,7 +32,7 @@ export function DyslexiaFlow({ studentId }: { studentId: string }) {
   const [file, setFile] = useState<File | null>(null);
   const [clientError, setClientError] = useState("");
   const [serverError, setServerError] = useState("");
-  const [result, setResult] = useState<DyslexiaAudioAnalysis | null>(null);
+  const [result, setResult] = useState<DyslexiaScreen | null>(null);
   const [recordId, setRecordId] = useState("");
   const busy = useRef(false);
 
@@ -70,14 +72,28 @@ export function DyslexiaFlow({ studentId }: { studentId: string }) {
     setPhase("analysing");
     setServerError("");
     try {
-      const analysis = await analyzeDyslexiaAudio(file);
+      const screen = await scoreDyslexiaFile(file);
+      let durationSeconds = screen.durationSeconds;
+      let estimatedActivitySeconds = screen.estimatedActivitySeconds;
+      let qualityFlags: string[] = [];
+      try {
+        const analysis = await analyzeDyslexiaAudio(file);
+        durationSeconds = analysis.durationSeconds;
+        estimatedActivitySeconds = analysis.estimatedActivitySeconds;
+        qualityFlags = analysis.qualityFlags;
+      } catch {
+        durationSeconds = screen.durationSeconds;
+      }
       const saved = await saveDyslexiaAudio({
         studentId: student.id,
-        durationSeconds: analysis.durationSeconds,
-        estimatedActivitySeconds: analysis.estimatedActivitySeconds,
-        qualityFlags: analysis.qualityFlags,
+        durationSeconds,
+        estimatedActivitySeconds,
+        qualityFlags,
+        score: screen.score,
+        level: screen.level,
+        signals: screen.signals,
       });
-      setResult(analysis);
+      setResult(screen);
       setRecordId(saved.id);
       setFile(null);
       setPhase("success");
@@ -94,28 +110,31 @@ export function DyslexiaFlow({ studentId }: { studentId: string }) {
     <div>
       <PageHeader
         title="Dyslexia audio analysis"
-        subtitle="Research audio check only. No risk score is produced."
+        subtitle="Oral-reading audio screening."
         breadcrumb={<Breadcrumb items={[{ label: "Students", href: "/students" }, { label: student.name, href: `/students/${student.id}` }, { label: "Dyslexia audio analysis" }]} />}
       />
       <StudentSummary name={student.name} code={student.code} grade={student.grade} />
 
       {phase === "success" && result ? (
         <Card className="max-w-2xl">
-          <h2 className="text-lg font-semibold text-heading">Audio check recorded</h2>
-          <dl className="mt-4 space-y-3 text-sm">
-            <div>
-              <dt className="text-muted">Duration</dt>
-              <dd className="font-medium text-heading">{result.durationSeconds.toFixed(2)} seconds</dd>
-            </div>
-            <div>
-              <dt className="text-muted">{DYSLEXIA_ACTIVITY_LABEL}</dt>
-              <dd className="font-medium text-heading">{result.estimatedActivitySeconds.toFixed(2)} seconds</dd>
-            </div>
-            <div>
-              <dt className="text-muted">Quality check</dt>
-              <dd className="font-medium text-heading">{qualityCheckText(result.qualityFlags)}</dd>
-            </div>
-          </dl>
+          <h2 className="text-lg font-semibold text-heading">{riskPhrase[result.level]}</h2>
+          <div className="mt-4 flex items-center gap-3">
+            <p className="font-heading text-5xl font-bold text-heading">{result.score}%</p>
+            <RiskBadge level={result.level} phrase />
+          </div>
+          <p className="mt-3 text-sm leading-6 text-body">Elevated screening concern starts at {DYSLEXIA_ELEVATED_THRESHOLD}%. Each feature stays at 0 until this recording crosses its cutoff.</p>
+          <div className="mt-4 space-y-4">
+            {result.signals.map((signal) => (
+              <div key={signal.label}>
+                <div className="mb-1 flex items-center justify-between text-sm">
+                  <span className="font-medium text-heading">{signal.label}</span>
+                  <span className="text-muted">{signal.value}%</span>
+                </div>
+                <RiskBar value={signal.value} level={levelFromScore(signal.value)} />
+                <p className="mt-1 text-xs text-muted">{signal.detail}</p>
+              </div>
+            ))}
+          </div>
           <p className="mt-4 text-sm leading-6 text-body">{DYSLEXIA_DISCLAIMER}</p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Link href={`/results/${recordId}`}><Button>View record</Button></Link>
@@ -145,7 +164,7 @@ export function DyslexiaFlow({ studentId }: { studentId: string }) {
               onChange={(event) => setConsent(event.target.checked)}
               aria-label="Consent for research audio analysis"
             />
-            <span>I confirm this recording may be analysed for research audio features only. This is not a dyslexia screening result.</span>
+            <span>I confirm this recording may be analysed for the oral-reading screen.</span>
           </label>
           <label
             className="mt-5 flex cursor-pointer flex-col items-center rounded-2xl border border-dashed border-lavender-border bg-primary-softer px-6 py-12 text-center"

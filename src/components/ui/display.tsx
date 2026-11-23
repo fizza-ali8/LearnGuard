@@ -149,14 +149,6 @@ export function ErrorState({
   );
 }
 
-export function DemoBadge({ label = "Demo result" }: { label?: string }) {
-  return (
-    <span className="inline-flex items-center rounded-full border border-lavender-border bg-primary-softer px-2 py-0.5 text-[11px] font-medium text-primary-dark">
-      {label}
-    </span>
-  );
-}
-
 export function Skeleton({ className }: { className?: string }) {
   return <div className={cn("animate-pulse rounded-xl bg-[#EEF0F4]", className)} />;
 }

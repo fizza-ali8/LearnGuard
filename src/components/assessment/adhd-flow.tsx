@@ -10,6 +10,7 @@ import {
   adhdDraftKey,
   answerLabel,
   answeredCount,
+  displayNumber,
   firstUnanswered,
   ADHD_SCREENING_DISCLAIMER,
   isAdhdEligible,
@@ -229,7 +230,7 @@ export function AdhdFlow({ studentId }: { studentId: string }) {
                 <div key={question.featureKey} id={`question-${question.featureKey}`}>
                 <Card>
                   <p className="text-xs font-medium text-primary-dark">{question.section}</p>
-                  <h2 className="mt-2 text-lg font-semibold text-heading">Question {question.number} of {questions.length}</h2>
+                  <h2 className="mt-2 text-lg font-semibold text-heading">Question {displayNumber(question, questions)} of {questions.length}</h2>
                   <p className="mt-2 text-base leading-7 text-heading">{question.question}</p>
                   {question.helpText ? <p className="mt-2 text-sm leading-6 text-muted">Helpful note: {question.helpText}</p> : null}
                   {question.featureKey === "sc_age_years" ? (
@@ -280,7 +281,7 @@ export function AdhdFlow({ studentId }: { studentId: string }) {
                 <dl className="mt-3 space-y-2">
                   {questionsInSection(item, questions).map((question) => (
                     <div key={question.featureKey} className="grid gap-1 text-sm sm:grid-cols-[1fr_auto]">
-                      <dt className="text-muted">{question.question}</dt>
+                      <dt className="text-muted">{displayNumber(question, questions)}. {question.question}</dt>
                       <dd className="font-medium text-heading">{answerLabel(question, answers[question.featureKey]) || "Not answered"}</dd>
                     </div>
                   ))}

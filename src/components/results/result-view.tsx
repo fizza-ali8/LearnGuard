@@ -2,13 +2,13 @@
 
 import { ScreeningDisclaimer } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
-import { Accordion, Breadcrumb, Card, DemoBadge, ErrorState, PageHeader, Tabs } from "@/components/ui/display";
+import { Accordion, Breadcrumb, Card, ErrorState, PageHeader, Tabs } from "@/components/ui/display";
 import { RiskBadge, RiskBar, RiskGauge } from "@/components/ui/risk";
 import { PRODUCT } from "@/lib/constants";
-import { DYSLEXIA_ACTIVITY_LABEL, DYSLEXIA_DISCLAIMER, qualityCheckText } from "@/lib/dyslexia-audio";
+import { DYSLEXIA_DISCLAIMER } from "@/lib/dyslexia-audio";
 import { formatDate, formatDuration } from "@/lib/format";
 import { adhdScreenStatus, featureLabel } from "@/data/adhd-questionnaire";
-import { moduleFullLabel } from "@/lib/risk";
+import { moduleFullLabel, riskPhrase } from "@/lib/risk";
 import { usePreferences } from "@/providers/preferences-provider";
 import { useData } from "@/providers/data-provider";
 import { Check } from "lucide-react";
@@ -31,7 +31,6 @@ export function ResultView({ assessmentId }: { assessmentId: string }) {
   }
 
   if (assessment.dyslexiaAudio) {
-    const audio = assessment.dyslexiaAudio;
     return (
       <div>
         <PageHeader
@@ -40,21 +39,24 @@ export function ResultView({ assessmentId }: { assessmentId: string }) {
           breadcrumb={<Breadcrumb items={[{ label: "Students", href: "/students" }, { label: student.name, href: `/students/${student.id}` }, { label: "Dyslexia audio analysis" }]} />}
         />
         <Card className="max-w-2xl">
-          <h2 className="text-lg font-semibold text-heading">Not assessed</h2>
-          <dl className="mt-4 space-y-3 text-sm">
-            <div>
-              <dt className="text-muted">Duration</dt>
-              <dd className="font-medium text-heading">{audio.durationSeconds.toFixed(2)} seconds</dd>
-            </div>
-            <div>
-              <dt className="text-muted">{DYSLEXIA_ACTIVITY_LABEL}</dt>
-              <dd className="font-medium text-heading">{audio.estimatedActivitySeconds.toFixed(2)} seconds</dd>
-            </div>
-            <div>
-              <dt className="text-muted">Quality check</dt>
-              <dd className="font-medium text-heading">{qualityCheckText(audio.qualityFlags)}</dd>
-            </div>
-          </dl>
+          <h2 className="text-lg font-semibold text-heading">{riskPhrase[assessment.riskLevel]}</h2>
+          <div className="mt-4 flex items-center gap-3">
+            <p className="font-heading text-5xl font-bold text-heading">{assessment.score ?? 0}%</p>
+            <RiskBadge level={assessment.riskLevel} phrase />
+          </div>
+          <p className="mt-3 text-sm leading-6 text-body">{assessment.explanation}</p>
+          <div className="mt-4 space-y-4">
+            {assessment.factors.map((signal) => (
+              <div key={signal.label}>
+                <div className="mb-1 flex items-center justify-between text-sm">
+                  <span className="font-medium text-heading">{signal.label}</span>
+                  <span className="text-muted">{signal.value ?? 0}%</span>
+                </div>
+                <RiskBar value={signal.value ?? 0} level={signal.impact === "high" ? "elevated" : signal.impact === "moderate" ? "moderate" : "low"} />
+                <p className="mt-1 text-xs text-muted">{signal.detail}</p>
+              </div>
+            ))}
+          </div>
           <p className="mt-4 text-sm leading-6 text-body">{DYSLEXIA_DISCLAIMER}</p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Button variant="secondary" onClick={() => router.push(`/students/${student.id}`)}>Return to student</Button>
@@ -79,16 +81,13 @@ export function ResultView({ assessmentId }: { assessmentId: string }) {
               <p className="max-w-2xl text-3xl font-bold text-heading">{adhdScreenStatus(assessment.adhdResult.screenPositive)}</p>
               <p className="mt-3 max-w-xl text-sm leading-6 text-body">{assessment.adhdResult.message}</p>
               <p className="mt-3 max-w-xl text-sm leading-6 text-muted">{assessment.adhdResult.disclaimer}</p>
-              {assessment.isDemo ? <p className="mt-3 max-w-xl text-xs leading-5 text-faint">Demonstration record. A new questionnaire uses the saved screening model.</p> : null}
             </>
           ) : (
             <>
               <p className="font-heading text-5xl font-bold text-heading">{assessment.score}%</p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <RiskBadge level={assessment.riskLevel} phrase />
-                {assessment.isDemo ? <DemoBadge /> : null}
               </div>
-              {assessment.isDemo ? <p className="mt-2 text-xs text-faint">Generated locally for interface testing.</p> : null}
               <p className="mt-3 max-w-xl text-sm text-muted">{PRODUCT.resultDisclaimer}</p>
             </>
           )}
@@ -214,7 +213,7 @@ export function ResultView({ assessmentId }: { assessmentId: string }) {
               title: "Advanced model details",
               content: (
                 <dl className="grid gap-2 sm:grid-cols-2">
-                  {assessment.modelName ? <div><dt className="text-muted">Model</dt><dd>{assessment.modelName}{assessment.isDemo ? " (demo label)" : ""}</dd></div> : null}
+                  {assessment.modelName ? <div><dt className="text-muted">Model</dt><dd>{assessment.modelName}</dd></div> : null}
                   {assessment.modelVersion ? <div><dt className="text-muted">Model version</dt><dd>{assessment.modelVersion}</dd></div> : null}
                   {typeof assessment.adhdResult?.modelScore === "number" ? (
                     <div className="sm:col-span-2">
@@ -232,7 +231,6 @@ export function ResultView({ assessmentId }: { assessmentId: string }) {
             },
           ]}
         />
-        {assessment.isDemo ? <p className="mt-2 text-xs text-faint">Model labels above are demonstration metadata, not a live inference record.</p> : null}
       </div>
       <ScreeningDisclaimer className="mt-4" />
     </div>

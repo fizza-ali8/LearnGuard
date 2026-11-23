@@ -1,8 +1,7 @@
 "use client";
 
 import { GlobalSearch } from "@/components/layout/global-search";
-import { Avatar, DemoBadge } from "@/components/ui/display";
-import { isDemoMode } from "@/lib/api";
+import { Avatar } from "@/components/ui/display";
 import { DropdownMenu, Popover } from "@/components/ui/overlay";
 import { TEACHER } from "@/lib/constants";
 import { greeting } from "@/lib/format";
@@ -62,7 +61,6 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
         </p>
       </div>
       <GlobalSearch />
-      {isDemoMode() ? <DemoBadge label="Demo mode" /> : null}
       <div className="ml-auto flex items-center gap-2">
         <label className="hidden lg:block">
           <span className="sr-only">Class</span>

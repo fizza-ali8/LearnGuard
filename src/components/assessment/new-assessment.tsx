@@ -64,7 +64,7 @@ function Wizard() {
               icon={<Mic className="h-5 w-5" />}
               title="Dyslexia audio analysis"
               input="Audio recording"
-              body="Research audio check only. No dyslexia risk score is produced."
+              body="Oral-reading audio, with a risk score and the sound features behind it."
               time="About 1 min"
               action="Analyse audio"
               disabled={!student?.consentVerified}
